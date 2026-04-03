@@ -16,4 +16,9 @@ export class SsoController {
   handleLogin(@Payload() data: LoginDto) {
     return this.ssoService.login(data);
   }
+
+  @MessagePattern({ cmd: 'verifyToken' })
+  handleVerifyToken(@Payload() data: { token: string }) {
+    return this.ssoService.verifyToken(data);
+  }
 }

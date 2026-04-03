@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +13,8 @@ export class SsoService {
     private readonly userRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
+
+  private readonly logger = new Logger(SsoService.name);
 
   async register(data: RegisterDto) {
     const { email, password } = data;
@@ -50,5 +52,15 @@ export class SsoService {
       access_token: token,
       user: { id: user.id, email: user.email },
     };
+  }
+
+  verifyToken(data: { token: string }) {
+    try {
+      this.jwtService.verify(data.token);
+      return true;
+    } catch (error) {
+      this.logger.warn('Token verification failed:', error);
+      return false;
+    }
   }
 }
