@@ -10,13 +10,13 @@
   "monorepo": true,
   "root": "apps/api-gateway",
   "projects": {
-    "bank-accounts": {
+    "bank": {
       "type": "application",
-      "root": "apps/bank-accounts",
+      "root": "apps/bank",
       "entryFile": "main",
-      "sourceRoot": "apps/bank-accounts/src",
+      "sourceRoot": "apps/bank/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/bank-accounts/tsconfig.app.json"
+        "tsConfigPath": "apps/bank/tsconfig.app.json"
       }
     },
     "api-gateway": {

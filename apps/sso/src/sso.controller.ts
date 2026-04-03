@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { RegisterDto } from './dtos/register.dto';
+import { RegisterDto } from './dto/register.dto';
 import { SsoService } from './sso.service';
-import { LoginDto } from './dtos/login.dto';
+import { LoginDto } from './dto/login.dto';
 @Controller()
 export class SsoController {
   constructor(private readonly ssoService: SsoService) {}

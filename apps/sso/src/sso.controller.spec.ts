@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SsoController } from './sso.controller';
 import { SsoService } from './sso.service';
 import { User } from './entities/user.entity';
-import { LoginDto } from './dtos/login.dto';
+import { LoginDto } from './dto/login.dto';
 
 describe('SsoController', () => {
   let ssoController: SsoController;
