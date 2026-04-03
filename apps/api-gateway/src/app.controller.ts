@@ -1,12 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { RegisterDto } from 'apps/sso/src/dtos/register.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(@Inject('SSO_SERVICE') private readonly ssoClient: ClientProxy) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Post('auth/register')
+  register(@Body() registerDto: RegisterDto) {
+    return this.ssoClient.send({ cmd: 'register' }, registerDto);
   }
 }

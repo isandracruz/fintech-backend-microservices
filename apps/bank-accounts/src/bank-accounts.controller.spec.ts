@@ -11,7 +11,9 @@ describe('BankAccountsController', () => {
       providers: [BankAccountsService],
     }).compile();
 
-    bankAccountsController = app.get<BankAccountsController>(BankAccountsController);
+    bankAccountsController = app.get<BankAccountsController>(
+      BankAccountsController,
+    );
   });
 
   describe('root', () => {

@@ -1,8 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { SsoModule } from './sso.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(SsoModule);
-  await app.listen(process.env.port ?? 3000);
+  const logger = new Logger('SSO-Microservice');
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    SsoModule,
+    {
+      transport: Transport.TCP,
+      options: {
+        host: '127.0.0.1',
+        port: 3001,
+      },
+    },
+  );
+
+  await app.listen();
+  logger.log('Microservicio SSO escuchando por TCP en el puerto 3001');
 }
-bootstrap();
+void bootstrap();
