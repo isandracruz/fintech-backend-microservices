@@ -4,11 +4,14 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { RegisterDto } from './dtos/register.dto';
+import { LoginDto } from './dtos/login.dto';
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class SsoService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
   async register(data: RegisterDto) {
@@ -24,5 +27,28 @@ export class SsoService {
 
     await this.userRepository.save(newUser);
     return { success: true, message: 'User created successfully' };
+  }
+
+  async login(data: LoginDto) {
+    const { email, password } = data;
+
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      return { error: 'Invalid credentials', status: 401 };
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return { error: 'Invalid credentials', status: 401 };
+    }
+
+    const payload = { sub: user.id, email: user.email };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Login successful',
+      access_token: token,
+      user: { id: user.id, email: user.email },
+    };
   }
 }
