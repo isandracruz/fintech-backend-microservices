@@ -9,13 +9,13 @@ import {
 export class OperationDto {
   @IsISO8601()
   @IsNotEmpty()
-  fecha!: string;
+  createdAt?: string;
 
   @IsString()
   @IsNotEmpty()
-  tipo!: string;
+  operationType!: string;
 
   @IsNumber()
   @Min(0)
-  monto!: number;
+  amount!: number;
 }

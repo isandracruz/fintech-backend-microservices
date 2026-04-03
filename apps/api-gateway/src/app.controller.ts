@@ -1,7 +1,10 @@
 import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
-import { RegisterDto } from 'apps/sso/src/dto/register.dto';
 import { ClientProxy } from '@nestjs/microservices';
-import { LoginDto } from 'apps/sso/src/dto/login.dto';
+
+import { RegisterDto } from '../../sso/src/dto/register.dto';
+
+import { LoginDto } from '../../sso/src/dto/login.dto';
+import { OperationDto } from '../../bank/src/dto/operation.dto';
 
 @Controller()
 export class AppController {
@@ -23,5 +26,10 @@ export class AppController {
   @Get('bank/operations')
   getBankOperations() {
     return this.bankClient.send({ cmd: 'get-operations' }, {});
+  }
+
+  @Post('bank/operations')
+  createBankOperation(@Body() operationData: OperationDto) {
+    return this.bankClient.send({ cmd: 'create-operation' }, operationData);
   }
 }

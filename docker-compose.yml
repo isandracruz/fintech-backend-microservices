@@ -14,5 +14,24 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # --- KAFKA SERVICE ---
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: fintech_kafka
+    ports:
+      - "${KAFKA_PORT}:9092"
+    environment:
+      # --- Configuración del nuevo motor KRaft ---
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Confluent exige un ID de clúster para iniciar sin Zookeeper
+      CLUSTER_ID: mkU3OEVBNTcwNTJENDM2Qk
+
 volumes:
   postgres_data:
