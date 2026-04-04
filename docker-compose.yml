@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # --- BASE DE DATOS ---
   postgres-db:
     image: postgres:15-alpine
     container_name: fintech_postgres
@@ -13,6 +14,8 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fintech_network
 
   # --- KAFKA SERVICE ---
   kafka:
@@ -21,17 +24,84 @@ services:
     ports:
       - "${KAFKA_PORT}:9092"
     environment:
-      # --- Configuración del nuevo motor KRaft ---
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_PORT}
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093      
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      # Confluent exige un ID de clúster para iniciar sin Zookeeper
       CLUSTER_ID: mkU3OEVBNTcwNTJENDM2Qk
+    networks:
+      - fintech_network
+
+  # --- MICROSERVICIO SSO ---
+  sso:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=sso
+    container_name: fintech_sso
+    ports:
+      - "3001:3001" 
+    environment:      
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-db:5432/${DB_NAME}?schema=public
+      - KAFKA_BROKER=kafka:9092
+      - DB_HOST=postgres-db
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - SSO_SERVICE_HOST=sso
+    depends_on:
+      - postgres-db
+    networks:
+      - fintech_network
+
+  # --- MICROSERVICIO BANK ---
+  bank:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=bank
+    container_name: fintech_bank
+    ports:
+      - "3002:3002"
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - MOCK_API_URL=${MOCK_API_URL}
+      - BANK_SERVICE_HOST=bank
+    depends_on:
+      - kafka
+    networks:
+      - fintech_network
+
+  # --- API GATEWAY ---
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=api-gateway
+    container_name: fintech_api_gateway
+    ports:
+      - "3000:3000"  
+    environment:
+      - SSO_SERVICE_HOST=sso
+      - BANK_SERVICE_HOST=bank  
+    depends_on:
+      - sso
+      - bank
+    networks:
+      - fintech_network
 
 volumes:
   postgres_data:
+
+networks:
+  fintech_network:
+    driver: bridge
