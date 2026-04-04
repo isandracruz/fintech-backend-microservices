@@ -7,7 +7,9 @@ import { LoginDto } from '../../sso/src/dto/login.dto';
 import { OperationDto } from '../../bank/src/dto/operation.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
+@UseGuards(ThrottlerGuard)
 @ApiTags('API Gateway')
 @Controller()
 export class AppController {

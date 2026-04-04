@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
+import { type App } from 'supertest/types';
 
 describe('API Gateway - Security (e2e)', () => {
   let app: INestApplication;
@@ -20,34 +21,34 @@ describe('API Gateway - Security (e2e)', () => {
     await app.close();
   });
 
-  it('should ', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const httpServer = app.getHttpServer();
+  it('should block requests after exceeding the limit (Error 429 Too Many Requests)', async () => {
+    const httpServer = app.getHttpServer() as App;
+    const limit = 10;
 
-    // 1. Fase de Ataque: Simulamos 10 peticiones rápidas
-    for (let i = 0; i < 10; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const response = await request(httpServer).post('/api/auth/login').send({
-        email: 'test@test.com',
-        password: 'password123', // <--- Ahora Bcrypt tendrá algo que comparar
-      });
-      console.log('🚀 ~ response:', response);
+    const attackRequests: Promise<any>[] = [];
 
-      // Comprobamos que NO nos esté bloqueando todavía (el status NO debe ser 429)
-      // Puede darnos 400 por no enviar datos, pero eso está bien, significa que pasó la seguridad.
-      expect(response.status).not.toBe(429);
+    for (let i = 0; i < limit; i++) {
+      attackRequests.push(
+        request(httpServer).post('/api/auth/login').send({
+          email: 'test@test.com',
+          password: 'password123',
+        }),
+      );
     }
 
-    // 2. Fase de Bloqueo: La petición número 11 DEBE ser rechazada por el Throttler
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const responses = await Promise.all(attackRequests);
+
+    responses.forEach((res: Response) => {
+      expect(res.status).not.toBe(429);
+    });
+
     const blockedResponse = await request(httpServer)
       .post('/api/auth/login')
       .send({
         email: 'test@test.com',
-        password: 'password123', // <--- Ahora Bcrypt tendrá algo que comparar
+        password: 'password123',
       });
 
-    // 429 es el código oficial de HTTP para "Too Many Requests"
     expect(blockedResponse.status).toBe(429);
   });
 });
