@@ -73,6 +73,9 @@ services:
       - "3002:3002"
     environment:
       - KAFKA_BROKER=kafka:9092
+      - KAFKA_CA=${KAFKA_CA}
+      - KAFKA_KEY=${KAFKA_KEY}
+      - KAFKA_CERT=${KAFKA_CERT}
       - MOCK_API_URL=${MOCK_API_URL}
       - BANK_SERVICE_HOST=bank
     depends_on:

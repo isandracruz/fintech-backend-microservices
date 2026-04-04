@@ -11,20 +11,36 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       {
         name: 'KAFKA_SERVICE',
         imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.KAFKA,
-          options: {
-            client: {
-              clientId: 'bank-service',
-              brokers: [
-                configService.get<string>('KAFKA_BROKER') || 'localhost:9092',
-              ],
+        useFactory: (configService: ConfigService) => {
+          const broker = configService.get<string>('KAFKA_BROKER');
+
+          const kafkaCa = configService.get<string>('KAFKA_CA');
+          const kafkaKey = configService.get<string>('KAFKA_KEY');
+          const kafkaCert = configService.get<string>('KAFKA_CERT');
+
+          const isCloud = !!kafkaCa && !!kafkaKey && !!kafkaCert;
+
+          return {
+            transport: Transport.KAFKA,
+            options: {
+              client: {
+                clientId: 'bank-service',
+                brokers: [broker || 'localhost:9092'],
+                ssl: isCloud
+                  ? {
+                      rejectUnauthorized: false,
+                      ca: [kafkaCa],
+                      key: kafkaKey,
+                      cert: kafkaCert,
+                    }
+                  : false,
+              },
+              consumer: {
+                groupId: 'bank-consumer',
+              },
             },
-            consumer: {
-              groupId: 'bank-consumer',
-            },
-          },
-        }),
+          };
+        },
         inject: [ConfigService],
       },
     ]),
